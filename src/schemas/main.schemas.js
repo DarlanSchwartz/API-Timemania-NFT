@@ -6,13 +6,16 @@ export const NewChestSchema = joi.object({
 })
 
 export const LoginSchema = joi.object({
-    name: joi.string().required(),
-    password: joi.string().required()
+    email: joi.string().email().required(),
+    password: joi.string().min(3).required()
 })
 
 export const RegisterSchema = joi.object({
     name: joi.string().required(),
-    password: joi.string().required()
+    email: joi.string().email().required(),
+    dataNascimento: joi.date().iso().required(),
+    cpf: joi.string().required(),
+    password: joi.string().min(3).required()
 })
 
 export const TeamSchema = joi.object({
