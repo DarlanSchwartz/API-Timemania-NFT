@@ -2,9 +2,10 @@ import { stripHtml } from "string-strip-html";
 import { db } from "../database/database.connection.js"
 import bcrypt from "bcrypt";
 import { v4 as uuid } from 'uuid';
+import { ObjectId } from "mongodb";
 
 export async function login(req, res) {
- const { email, password } = req.body;
+    const { email, password } = req.body;
 
     const sanitizedEmail = stripHtml(email).result.trim();
     const sanitizedPassword = stripHtml(password).result.trim();
@@ -21,7 +22,7 @@ export async function login(req, res) {
         await db.collection("login").insertOne({ token, idUsuario: usuario._id });
 
 
-        return res.status(200).send({token: token, nome: usuario.name, _id: usuario._id});
+        return res.status(200).send({ token: token, nome: usuario.name, _id: usuario._id });
 
     } catch (err) {
         res.status(500).send(err.message);
@@ -31,37 +32,64 @@ export async function login(req, res) {
 
 export async function register(req, res) {
 
-const { name, email, dataNascimento, cpf, password } = req.body;
+    const { name, email, dataNascimento, cpf, password } = req.body;
 
-const sanitizedName = stripHtml(name).result.trim();
-const sanitizedEmail = stripHtml(email).result.trim();
-const sanitizeddataNascimento = stripHtml(dataNascimento).result.trim();
-const sanitizedCpf = stripHtml(cpf).result.trim();
-const sanitizedPassword = stripHtml(password).result.trim();
+    const sanitizedName = stripHtml(name).result.trim();
+    const sanitizedEmail = stripHtml(email).result.trim();
+    const sanitizeddataNascimento = stripHtml(dataNascimento).result.trim();
+    const sanitizedCpf = stripHtml(cpf).result.trim();
+    const sanitizedPassword = stripHtml(password).result.trim();
 
-
-try {
-    const usuario = await db.collection("usuariosCadastrados").findOne({ email: sanitizedEmail });
-    if (usuario) return res.status(409).send("Esse usuário já existe!");
-
-    const hash = bcrypt.hashSync(sanitizedPassword, 10);
-
-    await db.collection("usuariosCadastrados").insertOne({ name: sanitizedName, email: sanitizedEmail, dataNascimento: sanitizeddataNascimento, cpf:sanitizedCpf, password: hash });
-
-    res.sendStatus(201);
-
-} catch (err) {
-    res.status(500).send(err.message);
-}
-}
-
-export async function addCard(req, res) {
 
     try {
-        return res.status(200).send('');
+        const usuario = await db.collection("usuariosCadastrados").findOne({ email: sanitizedEmail });
+        if (usuario) return res.status(409).send("Esse usuário já existe!");
+
+        const hash = bcrypt.hashSync(sanitizedPassword, 10);
+
+        await db.collection("usuariosCadastrados").insertOne({ name: sanitizedName, email: sanitizedEmail, dataNascimento: sanitizeddataNascimento, cpf: sanitizedCpf, password: hash });
+
+        res.sendStatus(201);
+
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+}
+
+export async function addCards(req, res) {
+
+    console.log(req.body);
+
+    try {
+        const usuario = await db.collection("login").findOne({ token: req.body[0] });
+        const Cards = await db.collection("usuariosCadastrados").findOne({ _id: new ObjectId(usuario.idUsuario)});
+        const filtro = { _id: new ObjectId(usuario.idUsuario) };
+        delete req.body[0];
+        const atualizacao = { $set: { arrCards: [...Cards.addCards,req.body] } };
+        await db.collection("usuariosCadastrados").updateOne(filtro, atualizacao);
+        return res.status(200).send('Cartas Adicionadas com Sucesso');
     } catch (error) {
         console.log(error);
         return res.status(500).send('Internal server error');
+    }
+}
+export async function getCards(req, res) {
+
+    const { token } = req.params;
+
+    try {
+        const usuario = await db.collection("login").findOne({ token  });
+
+        const Cards = await db.collection("usuariosCadastrados").findOne({ _id: new ObjectId(usuario.idUsuario)});
+
+        if(!Cards || !Cards.arrCards) return res.status(404).send({message:"Não foi possível encontrar nada pelo id solicitado"});
+
+        return res.status(200).send(Cards.arrCards);
+
+    } catch (err) {
+
+        return res.status(500).send(err.message);
+
     }
 }
 
