@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import db from '../database/database.connection.js';
+import { db } from "../database/database.connection.js"
 
 export async function getChest(req, res) {
 

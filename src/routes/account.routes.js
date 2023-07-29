@@ -5,7 +5,7 @@ import { login, register } from "../controllers/account.controller.js";
 
 const accountRouter = Router();
 
-accountRouter.get('/login', validateSchema(LoginSchema),login); 
+accountRouter.post('/login', validateSchema(LoginSchema),login);
 accountRouter.post('/cadastro',validateSchema(RegisterSchema) , register);
 
 export default accountRouter;

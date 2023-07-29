@@ -1,5 +1,5 @@
 import { stripHtml } from "string-strip-html";
-import db from '../database/database.connection.js';
+import { db } from "../database/database.connection.js"
 import bcrypt from "bcrypt";
 import { v4 as uuid } from 'uuid';
 

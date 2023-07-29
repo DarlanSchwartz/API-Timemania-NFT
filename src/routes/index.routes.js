@@ -6,9 +6,9 @@ import cardsRouter from "./cards.routes.js";
 
 const router = Router();
 
+router.use(accountRouter);
 router.use(chestRouter);
 router.use(mainRouter);
-router.use(accountRouter);
 router.use(cardsRouter);
 
 export default router;
