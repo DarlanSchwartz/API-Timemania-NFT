@@ -64,8 +64,7 @@ export async function addCards(req, res) {
         const usuario = await db.collection("login").findOne({ token: req.body[0] });
         const Cards = await db.collection("usuariosCadastrados").findOne({ _id: new ObjectId(usuario.idUsuario)});
         const filtro = { _id: new ObjectId(usuario.idUsuario) };
-        delete req.body[0];
-        const atualizacao = { $set: { arrCards: [...Cards.addCards,req.body] } };
+        const atualizacao = Cards.arrCards ? { $set: { arrCards: [...Cards.arrCards,{...req.body[1],id:uuid()},{...req.body[2],id:uuid()}] } } : { $set: { arrCards: [{...req.body[1],id:uuid()},{...req.body[2],id:uuid()}] } };
         await db.collection("usuariosCadastrados").updateOne(filtro, atualizacao);
         return res.status(200).send('Cartas Adicionadas com Sucesso');
     } catch (error) {
@@ -95,8 +94,18 @@ export async function getCards(req, res) {
 
 export async function removeCard(req, res) {
 
+    const {id,token} = req.params;
+
     try {
-        return res.status(200).send('');
+        const lUser = await db.collection("login").findOne({ token:id  });
+        const user = await db.collection("usuariosCadastrados").findOne({ _id: new ObjectId(lUser.idUsuario)});
+        console.log(token);
+        console.log(user.arrCards);
+        const newCards = user.arrCards.filter(card => card.id !== token);
+        console.log(newCards);
+       
+        await db.collection("usuariosCadastrados").updateOne({_id: new ObjectId(user._id) }, {$set:{ arrCards:newCards }});
+        return res.status(200).send("Carta SACADA");
     } catch (error) {
         console.log(error);
         return res.status(500).send('Internal server error');
